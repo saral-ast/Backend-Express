@@ -3,7 +3,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { use } from "react";
 
 
 const generateAccessAndRefreshTokens = async(userId) =>{
@@ -84,16 +83,22 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    const { username,email, password } = req.body;
 
-    if (!username || !email) {
+    const { username, email, password } = req.body;
+
+   
+    if (!(username || email)) {
+        throw new ApiError(400, "Please provide username or email");
+    }
+
+    if( !(username || email) ) {
         throw new ApiError(400, "Please provide username or email");
     }
 
   const user = await User.findOne({
       $or: [
-        { username: username.toLowerCase() },
-        { email: email.toLowerCase() }
+        { username: username?.toLowerCase() },
+        { email: email?.toLowerCase() }
       ]
     })
 
@@ -101,7 +106,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    const isPasswordValid = await user.isPasswordValid(password);
+    const isPasswordValid = await user.isPassordCorrect(password);
 
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid password");
