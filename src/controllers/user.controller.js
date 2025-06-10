@@ -92,10 +92,6 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Please provide username or email");
     }
 
-    if( !(username || email) ) {
-        throw new ApiError(400, "Please provide username or email");
-    }
-
   const user = await User.findOne({
       $or: [
         { username: username?.toLowerCase() },
@@ -165,12 +161,17 @@ const logoutUser = asyncHandler(async (req, res) => {
 const refreshAccessToken = asyncHandler(async (req, res) => {
    try {
      const incommingRefreshToken = req.cookies.refreshToken ||req.body.refreshToken;
+     
  
      if (!incommingRefreshToken) {
          throw new ApiError(401, "Unauthorized request");
      }
  
-    const decodedToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const decodedToken = jwt.verify(
+      incommingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+  
  
     const user = await User.findById(decodedToken?._id);
  
@@ -187,6 +188,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
      const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+     console.log("New Refresh Token:", newRefreshToken);
+     console.log("Access Token:", accessToken);
    
  
     return res
@@ -195,6 +199,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access token refreshed successfully"));
    } catch (error) {
+    console.error("Error refreshing access token:", error);
      throw new ApiError(500, "Something went wrong while refreshing access token");
     
    }
